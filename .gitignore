@@ -1,0 +1,15 @@
+# backup files
+*~
+*.swp
+*.bak
+*.orig
+
+# eclipse
+/.settings/
+/build/
+
+# virtual machine crash logs
+hs_err_pid*
+
+# project specific
+
