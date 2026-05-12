@@ -30,6 +30,7 @@ public class ShowComponent implements AWTEventListener {
         this.parent = parent;
     }
 
+    @Override
     public void eventDispatched(AWTEvent event) {
         if (event instanceof MouseEvent) {
             MouseEvent evt = (MouseEvent) event;

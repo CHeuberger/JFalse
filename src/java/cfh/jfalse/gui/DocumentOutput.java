@@ -18,6 +18,7 @@ public class DocumentOutput implements Output {
         return document;
     }
     
+    @Override
     public void append(String text) {
         try {
             document.insertString(document.getLength(), text, null);
@@ -26,14 +27,17 @@ public class DocumentOutput implements Output {
         }
     }
     
+    @Override
     public void append(char ch) {
         append(Character.toString(ch));
     }
     
+    @Override
     public void append(int value) {
         append(Integer.toString(value));
     }
 
+    @Override
     public void flush() {
         // TODO Auto-generated method stub
     }

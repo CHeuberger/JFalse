@@ -26,8 +26,9 @@ public class Parser {
         tokenizer.skipWhitespace();
         while (tokenizer.hasNext()) {
             char ch = tokenizer.next();
+            //                syntax:         pops:           pushes:         example:
             switch (ch) {
-                case '{':  // {comment}       -               -                       { this is a comment }
+                case '{':  // {comment}       -               -               { this is a comment }
                     lambda.append(parseComment(tokenizer));
                     break;
                 case '[':  // [code]          -               function        [1+]    { (lambda (x) (+ x 1)) }
@@ -127,7 +128,7 @@ public class Parser {
                 case '@':  // @               n,n1,n2         n1,n2,n         1 2 3@  { rot }
                     lambda.append(new Rot());
                     break;
-                case 'ø':  // ø (alt-o)       n               v               1 2 1ø  { pick } 
+                case 'ø':  // ø               n               v               1 2 1ø  { pick } 
                 case 'O':  // optional for ø
                     lambda.append(new Pick());
                     break;
@@ -151,7 +152,7 @@ public class Parser {
                 case '^':  // ^               -               ch              ^       { getc() }
                     lambda.append(new Read());
                     break;
-                case 'ß':  // ß (alt-s)       -               -               ß       { flush() }
+                case 'ß':  // ß               -               -               ß       { flush() }
                 case 'B': // optional for ß
                     lambda.append(new Flush());
                     break;

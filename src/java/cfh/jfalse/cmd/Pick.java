@@ -16,7 +16,7 @@ public class Pick extends Monad {
 
     @Override
     public String toString() {
-        return "\u00F8";  // ø
+        return "Ã¸";
     }
 
 }

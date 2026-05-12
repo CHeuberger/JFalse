@@ -45,7 +45,7 @@ public class ListStack implements Stack, PropertyChangeListener {
         return useHead;
     }
     
-    public ListModel getListModel() {
+    public ListModel<StackObject> getListModel() {
         return model;
     }
     
@@ -172,7 +172,7 @@ public class ListStack implements Stack, PropertyChangeListener {
 
     //==============================================================================================
     
-    private class StackListModel  extends AbstractListModel {
+    private class StackListModel extends AbstractListModel<StackObject> {
         
         private static final long serialVersionUID = 5904219800262686730L;
 
@@ -192,7 +192,7 @@ public class ListStack implements Stack, PropertyChangeListener {
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public StackObject getElementAt(int index) {
             synchronized (data) {
                 return data.get(index);
             }

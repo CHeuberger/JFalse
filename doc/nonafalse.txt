@@ -1,0 +1,295 @@
+The Nano-FALSE Programming Language
+
+by Willow Fung
+mail: logic1@i-cable.com
+
+(Orginal FALSE by Dr. Wouter van Oortmerssen)
+orginal can found in http://wouter.fov120.com/
+
+Manual
+
++-------------------------------------------------------------+
+* Introduction
++-------------------------------------------------------------+
+
+Nano-False is super set of False, and hope to process some simple tasks.
+
+You can use old set "!@#$%^&*" fuzzy style and, readable style :
+	"rot dup drop and or not if while"
+
+The language Nano-FALSE and it's compiler were designed for only three reasons:
+- building a language let me programming in mobile-phone (I can't less than 1K size)
+- designing a language that looks cryptic, fuzzy (in the APL, J, K language tradition)
+- portable next generation for forth like language in foolish purpose
+
+
+Nano-False is a comilped language that generate mix-like opcode in runtime, and
+immediate run in nano-VM in runtime.
+
+So, It still stronge type.
+
+there are very bad syntax error checks.
+
++-------------------------------------------------------------+
+* New bulti-in function
++-------------------------------------------------------------+
+{comment}  comment
+[code] ( --- fun) push a block
+variable   ( --- varadr)
+integer ( --- value)
+'char  ( --- value)
+
+num`  in nano-false removed
+
+!  (fun --- ) apply function
+
++ (n1,n1 --- n1+n2)
+- (n1,n1 --- n1-n2)
+* (n1,n1 --- n1*n2)
+/ (n1,n1 --- n1/n2)
+_  (n --- (- n1))
+
+
+= eq  ( n1,n2 --- n1==n2)
+> gt ( n1,n2 --- n1>n2)
+< lt ( n1,n2 --- n1<n2)
+
+~ not ( n --- ! n) logical 'not', have not bitwise 'not'
+& and ( n1,n2 --- n1 & n2)
+| or ( n1,n2 --- n1 | n2)
+
+$ dup ( n --- n, n)
+% drop ( n --- )
+\ swap ( n1,n2 ---  n2,n1)
+@ rot (n,n1,n2 --- n1,n2,n)
+pick (n --- x) copy n-th item to top,the old pick removed (0 pick = dup)
+over (n1, n2 --- n1, n2, n1) as same as 1 pick
+
+? if (bool,fun --- ) if bool is non-zero, then apply the function
+# (boolf,fun --- ) if boolf return true value, do a time fun, until boolf return false value
+# (fun, var --- ) if var is variable type and fun is lambda type, then define new operator named var
+
+cr ( --- )  print a new line
+.  (n --- ) print number, string, function
+"string"  (n --- ) print a string (off mode)
+"string"  ( --- s) push a string to stack (on mode) ("hello") . equal "hello"
+^ ( --- c) push a char from stream
+here ( --- n) where n is current heap pointer.
+allot (n --- ) allocate n cells
+cells (n --- s) where n is number of cells, s is n cells's real size
+
+tos ( --- n) where n is current stack pointer.
+count ( --- n) where n is number of elements in stack.
+
+("(1+2)*3"	"string") input
+
+,	(c --- ) print a char to screen. (off mode)
+,	(n --- ) store n to new allocated cell. (on mode)
+
+;	(var --- val) deref a val. (off mode)
+;	(n, arr --- val) get the n-th value from a array. (on mode)
+
+:	(n,varadr --- ) assign n to varadr
+:	(i, arr, val --- ) assign val to array (like C statement:  arr[i] = val )
+
+(	(  ---  ) left-par ON new operation mode.
+)	(  ---  ) right-par OFF new operation mode.
+
+input (stm, obj --- ) assign data stream to object type (textbox, file, inputbox, socket, string...)
+	now only implemented string. (Please ref. example 'eval')
+
++-------------------------------------------------------------+
+* Example programming
++-------------------------------------------------------------+
+In nano-false variable can use lower/upper case, and more than one char to represent 
+
+{ Factorial in orginal False }
+[$1=$[\%1\]?~[$1-f;!*]?]f: 
+4f;!.
+
+{ Another factoral }
+[dup 1 = dup [swap drop 1 swap] if not [dup 1 - fac ; ! *] if] fac :
+4 fac ; ! .
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+New definition for #
+In nano-false # not only while loop, it can define a new operator for
+easily to call a function.
+
+I want writing following in C :
+--------------------------------------
+int sqr(int i) 
+{ 
+  return(i*i);
+}
+
+printf("%d" sqr( 5 ));
+
+In false :
+--------------------------------------
+[$*]sqr:
+5 sqr;! .
+
+In nano-false :
+--------------------------------------
+[$*]sqr#
+5 sqr .
+
+The # to look the stack, in pattern-matching:
+(lam1, lam2 --- ) for orginal while-loop
+(lam1, var --- ) for define a new operator (call like a bulti-in function)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{ drop until }
+[$;1+\:]inc#					{ increase 1 }
+[n: 0i:  [i; n; <][." " i inc]#]s#		{ dump n elements in stack }
+[st: [tos st; >][drop]#]dropUntil#	{ drop n elements in stack }
+
+1 2 5 0 3 4 5 6 7 8 8	{ push a list A }
+tos w:				{ save current stack ptr }
+3 5 2 7 5 8 2 9 1 0 3	{ push a list B }
+w; dropUntil			{ rest list A }
+count s				{ dump all }
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{ high-order function map }
+[$;1+\:]inc#					{ increase 1 }
+[n: 0i:  [i; n; <][." " i inc]#]s#		{ dump n elements in stack }
+
+{ high-order function map }
+[fun: count n: 0i: [i; n; <]
+[n; 1 - pick fun;! i inc]# ]map#	{ usage :	( a1...a2, func --- a1...a2, r1...r2) }
+
+[$ *]sqr:						{ square function }
+2 3 4 5 6 7 8 9  sqr; map
+
+count s
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{ Array Demo }
+[$;1+\:]inc#
+[;a:n:0i: [i; n; <][i; (a;)." " i inc]#]dump#  { dump n elements from array }
+
+
+{ you can fill array not in sequnce }
+here arr1: 5 cells allot (
+4 arr1 11:
+3 arr1 12:
+2 arr1 13:
+1 arr1 14:
+0 arr1 15: )
+
+{ or, fill array in sequnce }
+here arr2 : ( 100, 200, 300, 400, 500, )
+
+{ Following dump arr1, arr2 }
+5 arr1 dump cr  { output : 15 14 13 12 11 }
+5 arr2 dump cr  { output : 100 200 300 400 500 }
+10 arr1 dump cr { output : 15 14 13 12 11 100 200 300 400 500 }
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{ Nested loop print 9x9 table}
+{ like for-loop, it use 2 variable i, k }
+"Imperative style" cr 
+1i:  [i;10<][ 
+	1k: [k;10<][
+		i; . "*" k; ."=" i;k;* . " " 
+	k;1+k:]#
+	cr
+i;1+i:]# 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{ Another Nested loop print 9x9 table }
+{ it not need any variable, stack use only }
+"Stack-oriended style" cr
+[1 pick 1 pick]dup2#
+1 [$ 10<][ 1 [$ 10<][dup2 dup2 swap . "*" . "=" * . " " 1+]# drop 1+ cr ]#
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+SYNTAX: a.out <Expression> <operand> <Expression>
+        <Expression> = num |  (<Expression> <operand> <Expression> )
+}
+
+(
+"(((3*(4+2))-2)^2)-4" "string" input
+)
+
+[^a:a;'(=$[m;!b:^a:]?~[a;0b:[a:'0 a;>~'91+a;>&][b;10
+*b:a;'0-b;+b:^]#]?b;[a;32=][^a:]#a;^a:a;'(=$[m;!b:^a
+:]?~[a;0b:[a:'0a;>~'91+a;>&][b;10*b:a;'0-b;+b:^]#]?b
+;b:o:a:o;'*=[a;b;*]?o;'+=[a;b;+]?o;'-=[a;b;-]?o;'/=[
+a;b;/]?o;'^=[a;c:[b;1>][c;a;*c:b;1-b:]#c;]?]m:m;!."
+
+
+this example is get from Eelko, orginal get expression from user input,
+now specifiy by 'input', the meaning is get data from a string stream and
+the stream data is "(((3*(4+2))-2)^2)-4". the ( and ) is on/off the mode,
+In on mode is push the string to stack, not print the string to screen.
+
+'input' made '^' get data from where, the user can assign stream in anything :
+
+	"0123456789" "string" input { get data from string data in first argument }
+	"abc" "var" input { get data from a variable named 'abc' }
+	"MyTextBox" "textbox" input { get data from textbox object named 'MyTextBox' }
+	"list.txt" "file" input { get data from file stream }
+	.
+	.
+	.
+	anything, because now I just implemented the string stream case.
+	
++-------------------------------------------------------------+
+* Portable
++-------------------------------------------------------------+
+Something not different between False :
+
+1. nano-false accept upper and lower case variable like C, java, so
+    some un-printable bulti-in, and contra with variable bulti-in will changed.
+    the pick operator use a word 'pick' to repace it.
+2. remove some platform depend bulti-in, so have not 'flush'.
+
+3. "^" get char in stream, change to environment undepent
+	you can get data in a string stream. (textbox, file, ... not implement!!!)
+	(Please ref. to "eval" example)
+
+4. Recommend no use bitwise operation, because the result not as same as orginal-false,
+	so, just use in (& | ~) "and or not" in logical purpose.
+	& change to &&
+	| change to ||
+	~ change to !=
+ 
+5. list example can direct run in nano-false:
+ - helloworld.f
+ - fac.f
+ - lambda.f
+ - prime.f
+ - Fibonacci.f
+ - filter.f
+ (many old false example have I\O is can't run in nano-false)
+
+6. In org-false that have "Inline assembly", I think first purpose for allocate memory.
+    Because a big one-dimension array that can simlulate a state-machine, state-machine
+    can apply many traditional algorthim and programming method.
+
+    For cross-platform reason, so, remove "inline assembly".
+
+
++-------------------------------------------------------------+
+* Installation
++-------------------------------------------------------------+
+1. Install Mobile Information Device Profile (MIDP) 2.0 (J2ME)
+	http://java.sun.com/products/midp/
+	
+2. unzip the package
+
+3. Modify the run.bat to your midp install path
+	d:\midp2\bin\midp -classpath d:\midp\classes;.\output -descriptor cmd.jad
+	
+4. Run it.
+
+5. The example have been add to nano-false internal.
+
+6. The mobile phone emulator will create a file in :
+	D:\midp2\appdb\run_by_class_storage_fprog.db
+	
+To store the example and user program, if you want to reset example, 
+you may delete it ( run_by_class_storage_fprog.db ) that will try to create in next time.
+

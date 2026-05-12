@@ -20,6 +20,6 @@ public class Pause extends Monad {
 
     @Override
     public String toString() {
-        return "µ";
+        return "Â¶";
     }
 }

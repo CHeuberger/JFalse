@@ -3,7 +3,6 @@ package cfh.jfalse.gui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -18,7 +17,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -56,6 +54,7 @@ import cfh.jfalse.cmd.Command;
 import cfh.jfalse.stack.Lambda;
 import cfh.jfalse.stack.StackObject;
 import cfh.jfalse.stack.StatusBar;
+import cfh.jfalse.stack.Value;
 
 public class GUI {
 
@@ -73,7 +72,7 @@ public class GUI {
     private final JTextArea history;
     private final JEditorPane inputView;
     private final JTextArea outputView;
-    private final JList stackView;
+    private final JList<StackObject> stackView;
     private final JTable variableView;
     private final StatusBar statusbar;
 
@@ -88,7 +87,8 @@ public class GUI {
 
     private final TableVariables variables;
     
-    private Window helpView = null;
+    private JFrame helpView = null;
+    private JFrame functionHelpView = null;
     private ExecutorRunnable executor = null;
 
 
@@ -266,11 +266,12 @@ public class GUI {
         });
         popup.add(item);
 
-        ListModel stackModel = stack.getListModel();
+        ListModel<StackObject> stackModel = stack.getListModel();
         stackModel.addListDataListener(new ScrollToEnd());
         stackView = newJList(stackModel, "stack");
         stackView.setFocusable(false);
-        stackView.setPrototypeCellValue("1234567890123456789012345");
+        stackView.setPrototypeCellValue(new Value(Integer.MIN_VALUE));
+        stackView.setFixedCellWidth(180);
         stackView.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -398,7 +399,7 @@ public class GUI {
         });
         
         final JCheckBoxMenuItem useHead = newJCheckBoxMenuItem("Use Head");
-        useHead.setToolTipText("Stack operations work on the head of the stack");
+        useHead.setToolTipText("Stack operations work on the head (top) of the stack");
         useHead.setSelected(settings.getStackUseHead());
         useHead.addActionListener(new ActionListener() {
             @Override
@@ -409,7 +410,7 @@ public class GUI {
             }
         });
         final JCheckBoxMenuItem extensions = newJCheckBoxMenuItem("Extensions");
-        extensions.setToolTipText("Use extensions like '�'");
+        extensions.setToolTipText("Use extensions like '¶'");
         extensions.setSelected(settings.getExtensions());
         extensions.addActionListener(new ActionListener() {
             @Override
@@ -451,19 +452,31 @@ public class GUI {
         setmenu.addSeparator();
         setmenu.add(prio);
 
-        JMenuItem commandHelp = newJMenuItem("Commands");
-        commandHelp.addActionListener(new ActionListener() {
+        JMenuItem generalHelp = newJMenuItem("Help");
+        generalHelp.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (helpView == null)  {
+                if (helpView == null)  {  // DEBUG
                     helpView = createHelpView();
                 }
                 helpView.setVisible(true);
             }
         });
         
+        JMenuItem function = newJMenuItem("Functions");
+        function.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (functionHelpView == null)  {  // DEBUG
+                    functionHelpView = createFunctionHelpView();
+                }
+                functionHelpView.setVisible(true);
+            }
+        });
+        
         JMenu help = newJMenu("Help");
-        help.add(commandHelp);
+        help.add(generalHelp);
+        help.add(function);
         // TODO about
 
         JMenuBar bar = new JMenuBar();
@@ -475,24 +488,19 @@ public class GUI {
 
         setFont();
 
-        frame= new JFrame("JFALSE");
+        frame= new JFrame("JFALSE - v" + JFalse.VERSION);
         frame.setName("JFALSE");
         frame.setJMenuBar(bar);
         frame.setLayout(new BorderLayout());
         frame.add(center, BorderLayout.CENTER);
         frame.add(stavar, BorderLayout.LINE_END);
         frame.add(statusbar, BorderLayout.PAGE_END);
-        frame.setSize(1200, 800);
+        frame.setSize(1200, 810);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                frame.setVisible(true);
-                command.requestFocusInWindow();
-            }
-        });
+        frame.setVisible(true);
+        command.requestFocusInWindow();
     }
     
     private void addHistory(String text) {
@@ -547,8 +555,8 @@ public class GUI {
         return table;
     }
 
-    private JList newJList(ListModel model, String name) {
-        JList list = new JList(model);
+    private JList<StackObject> newJList(ListModel<StackObject> model, String name) {
+        JList<StackObject> list = new JList<>(model);
         list.setName(name);
         return list;
     }
@@ -602,19 +610,139 @@ public class GUI {
         return comp;
     }
     
-    private Window createHelpView() {
+    private JFrame createHelpView() {
         JEditorPane pane = new JEditorPane();
         pane.setName("help");
         pane.setContentType("text/html");
-        // TODO read help text
-        pane.setText("<html>Just<br> a <br><b>test</b>");
+        pane.setEditable(false);
+        pane.setText(""
+            + "<h1><center>JFALSE - v" + JFalse.VERSION + "</center></h1>\n"
+            + "\n"
+            + "<h2><center>Menus</center></h2>\n"
+            + "<h3>JFalse</h3>\n"
+            + helpTable(
+                    "Stop", "stop the execution of the current program",
+                    "Reset", "reset the environment",
+                    "Clear All", "clear input, output, history, stack and variables",
+                    "Quit", "exit the program")
+            + "<h3>Settings</h3>\n"
+            + helpTable(
+                     "Step", "step the program",
+                     "Use Head", "stack operations work on the head (top) of the stack",
+                     "Extensions", "use extensions like <code>¶</code>",
+                     "Font Size", "set the font size",
+                     "Executor Priority", "set the priority of the executor thread")
+            + "<h3>Help</h3>\n"
+            + helpTable(
+                    "Help", "show this help",
+                    "Commands", "show the list of available commands")
+            + "<h2><center>Popup</center></h2>\n"
+            + helpTable(
+                    "Execute", "execute the command (also Ctrl+Enter)",
+                    "Clear", "clear the corresponding contents")
+            );
         
         JFrame helpframe = new JFrame("Help");
         helpframe.setName("Help Frame");
         helpframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         helpframe.add(new JScrollPane(pane));
         helpframe.pack();
+        helpframe.setLocationRelativeTo(frame);
+        
         return helpframe;
+    }
+    
+    private JFrame createFunctionHelpView() {
+        JEditorPane pane = new JEditorPane();
+        pane.setName("help");
+        pane.setContentType("text/html");
+        pane.setEditable(false);
+        pane.setText(""
+            + "<h1><center>JFALSE - v" + JFalse.VERSION + "</center></h1>\n"
+            + "\n"
+            + "<h2><center>Functions</center></h2>\n"
+            + "<table border='0' cellspacing='1' cellpadding='0'>\n"
+            + "<tr><th align='left'>syntax</th><th align='left'>pops</th><th align='left'>pushes</th><th align='left'>example</th></tr>\n"
+            + functionHelpRow("{comment}", "-",             "-",         "{ ignored }")
+            + functionHelpRow("[code]",    "-",             "function",  "[1+]", "lambda to add one")
+            + functionHelpRow("a .. z",    "-",             "varadr",    "a", "use <code>a:</code> or <code>a;</code>")
+            + functionHelpRow("integer",   "-",             "value",     "123")
+            + functionHelpRow("'char",     "-",             "value",     "'A")
+            + functionHelpRow(":",         "value,varaddr", "-",         "1 a:", "store 1 in a")
+            + functionHelpRow(";",         "varaddr",       "value",     "a;",  "retrieves from a")
+            + functionHelpRow("!",         "function",      "-",         "[1+] !", "execute the function on the stack")
+            + "<td></td>"
+            + functionHelpRow("+",         "v1,v2",         "value",     "1 2 +", "3")
+            + functionHelpRow("-",         "v1,v2",         "value",     "1 2 -", "-1")
+            + functionHelpRow("*",         "v1*v2",         "value",     "2 3 *", "6")
+            + functionHelpRow("/",         "v1/v2",         "value",     "5 2 /", "2")
+            + functionHelpRow("_",         "value",         "-value",    "7_",  "negate value")
+            + "<td></td>"
+            + functionHelpRow("=",         "v1,v2",         "bool",      "2 3 =", "false")
+            + functionHelpRow(">",         "v1,v2",         "bool",      "3 2 >", "true")
+            + functionHelpRow("&",         "v1,v2",         "bool",      "3 1 > 6 9 > &", "false")
+            + functionHelpRow("|",         "v1,v2",         "bool",      "9 1 > 6 9 > |", "true")
+            + functionHelpRow("~",         "value",         "bool",      "3 1 > ~", "false")
+            + functionHelpRow("?",         "bool,function", "-",         "a; 2= [1+] ?", "if a is 2, add one")
+            + functionHelpRow("#",         "bool,function", "-",         "1[$100>~][1+]#", "while not greater 100, add one")
+            + "<td></td>"
+            + functionHelpRow("$",         "v1",            "v1,v1",     "3 $",   "dup top")
+            + functionHelpRow("%",         "value",         "-",         "4 %",   "drop top")
+            + functionHelpRow("@",         "v1,v2,v3",      "v2,v3,v1",  "1 2 3@", "rotate top three")
+            + functionHelpRow("ø",         "v1",            "v2",        "10 20 1 ø", "pick second to top (10)")
+            + functionHelpRow("O",         "v1",            "v2",        "10 20 1 O", "pick second to top (10)")
+            + "<td></td>"
+            + functionHelpRow(".",         "value",         "-",         "123 .", "print value")
+            + functionHelpRow("\"text\"",  "-",             "-",         "\"Hello\" .", "print text")
+            + functionHelpRow(",",         "vaue",          "-",         "10,", "print value as char")
+            + functionHelpRow("^",         "-",             "value",     "^", "read a char from input")
+            + functionHelpRow("ß",         "-",             "-",         "ß", "flush input and output")
+            + functionHelpRow("B",         "-",             "-",         "B", "flush input and output")
+            + "<td><b>Extesnsions</b></td>"
+            + functionHelpRow("¶",         "value",         "-",         "500¶", "pause for 500 milliseconds")
+            + functionHelpRow("P",         "value",         "-",         "500P", "pause for 500 milliseconds")
+            + "</table>\n"
+            + "<p>Note: <code>true</code> is equivalent to any non-zero value, <code>false</code> to zero</p>\n" 
+            );
+        
+        JFrame helpframe = new JFrame("Commands");
+        helpframe.setName("Help Frame");
+        helpframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        helpframe.add(new JScrollPane(pane));
+        helpframe.pack();
+        helpframe.setLocationRelativeTo(frame);
+        
+        return helpframe;
+    }
+    
+    private String helpTable(String... keyValues) {
+        assert keyValues.length % 2 == 0 : "invalid keyValues length " + keyValues.length;
+        String table = "<table border='0' cellspacing='0' cellpadding='0'>\n";
+        for (int i = 0; i < keyValues.length; i += 2) {
+            String key = keyValues[i];
+            String description = keyValues[i+1];
+            table += "<tr>"
+                + "<td><code>" + key + "</code></td>"
+                + "<td>&nbsp;&nbsp;</td>"
+                + "<td>" + description + "</td>"
+                + "</tr>\n";
+        }
+        table += "</table>\n";
+        return table;
+    }
+    
+    private String functionHelpRow(String syntax, String pops, String pushes, String example) {
+        return functionHelpRow(syntax, pops, pushes, example, "");
+    }
+
+    private String functionHelpRow(String syntax, String pops, String pushes, String example, String description) {
+        return "<tr>"
+            + "<td><code>" + syntax + "</code></td>"
+            + "<td>" + pops + "</td>"
+            + "<td>" + pushes + "</td>"
+            + "<td><code>" + example + "</code></td>"
+            + "<td><i>" + description + "</i></td>"
+            + "</tr>\n";
     }
     
     //==============================================================================================

@@ -35,6 +35,7 @@ public class DocumentInput implements Input {
         return document;
     }
 
+    @Override
     public int read() {
         if (readIndex > document.getLength()-1)    // extra linefeed
             return -1;
@@ -47,6 +48,7 @@ public class DocumentInput implements Input {
         }
     }
     
+    @Override
     public void flush() {
         moveReadIndex(0);
     }
