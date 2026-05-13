@@ -661,7 +661,7 @@ public class GUI {
             + "<h1><center>JFALSE - v" + JFalse.VERSION + "</center></h1>\n"
             + "\n"
             + "<h2><center>Functions</center></h2>\n"
-            + "<table border='0' cellspacing='1' cellpadding='0'>\n"
+            + "<table border='0' cellspacing='2' cellpadding='0'>\n"
             + "<tr><th align='left'>syntax</th><th align='left'>pops</th><th align='left'>pushes</th><th align='left'>example</th></tr>\n"
             + functionHelpRow("{comment}", "-",             "-",         "{ ignored }")
             + functionHelpRow("[code]",    "-",             "function",  "[1+]", "lambda to add one")
@@ -683,8 +683,8 @@ public class GUI {
             + functionHelpRow("&",         "v1,v2",         "bool",      "3 1 > 6 9 > &", "false")
             + functionHelpRow("|",         "v1,v2",         "bool",      "9 1 > 6 9 > |", "true")
             + functionHelpRow("~",         "value",         "bool",      "3 1 > ~", "false")
-            + functionHelpRow("?",         "bool,function", "-",         "a; 2= [1+] ?", "if a is 2, add one")
-            + functionHelpRow("#",         "bool,function", "-",         "1[$100>~][1+]#", "while not greater 100, add one")
+            + functionHelpRow("?",         "bool,fun",      "-",         "a; 2= [1+] ?", "if a is 2, add one")
+            + functionHelpRow("#",         "boolfun,fun2",  "-",         "1[$100>~][1+]#", "while not greater 100, add one")
             + "<td></td>"
             + functionHelpRow("$",         "v1",            "v1,v1",     "3 $",   "dup top")
             + functionHelpRow("%",         "value",         "-",         "4 %",   "drop top")
